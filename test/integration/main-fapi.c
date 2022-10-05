@@ -76,7 +76,7 @@ size_t nmb_of_fields(json_object *jso) {
  */
 bool cmp_jso(json_object *jso1, json_object *jso2) {
     enum json_type type1, type2;
-    size_t i, size;
+    size_t i, j, size;
     type1 = json_object_get_type(jso1);
     type2 = json_object_get_type(jso2);
     if (type1 != type2) {
@@ -105,12 +105,19 @@ bool cmp_jso(json_object *jso1, json_object *jso2) {
         if (size != (size_t)json_object_array_length(jso2)) {
             return false;
         }
+        /* Ignore order of elements in array. */
         for (i = 0; i < size; i++) {
-            if (!cmp_jso(json_object_array_get_idx(jso1, i),
-                         json_object_array_get_idx(jso2, i))) {
-                return false;
+            for (j = 0; j < size; j++) {
+                if (cmp_jso(json_object_array_get_idx(jso1, i),
+                            json_object_array_get_idx(jso2, j))) {
+                    break;
+                }
             }
+            if (j >= size)
+                return false;
         }
+        if (i < size)
+            return false;
         return true;
     } else if (type1 == json_type_string) {
         return (strcmp(json_object_get_string(jso1),
